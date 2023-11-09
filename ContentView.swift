@@ -103,39 +103,42 @@ struct EmptyStar: Shape {
         StarShape().path(in: rect)
     }
 }
-
 struct StarShape: Shape {
+    var points: Int = 5
+    var innerRatio: CGFloat = 0.5 // The ratio of the inner radius to the outer radius
+
     func path(in rect: CGRect) -> Path {
+        let drawPoints = points * 2
+        let outerRadius: CGFloat = min(rect.size.width, rect.size.height) / 2
+        let innerRadius: CGFloat = outerRadius * innerRatio
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+
         var path = Path()
 
-        let originalSize = CGSize(width: 88.29, height: 80.5)
-        let scale = min(rect.width / originalSize.width, rect.height / originalSize.height)
+        // Start from the top
+        let startAngle = (-CGFloat.pi / 2)
+        let angleIncrement = .pi / CGFloat(points)
 
-        let points = [
-            CGPoint(x: 45.25, y: 0),
-            CGPoint(x: 61.13, y: 23),
-            CGPoint(x: 88.29, y: 30.75),
-            CGPoint(x: 70.95, y: 52.71),
-            CGPoint(x: 71.85, y: 80.5),
-            CGPoint(x: 45.25, y: 71.07),
-            CGPoint(x: 18.65, y: 80.5),
-            CGPoint(x: 19.55, y: 52.71),
-            CGPoint(x: 2.21, y: 30.75),
-            CGPoint(x: 29.37, y: 23)
-        ]
+        for i in 0..<drawPoints {
+            let radius = i % 2 == 0 ? outerRadius : innerRadius
+            let angle = startAngle + (angleIncrement * CGFloat(i))
 
-        let scaledPoints = points.map { CGPoint(x: $0.x * scale, y: $0.y * scale) }
+            let point = CGPoint(
+                x: center.x + radius * cos(angle),
+                y: center.y + radius * sin(angle)
+            )
 
-        path.move(to: scaledPoints[0])
-        for point in scaledPoints.dropFirst() {
-            path.addLine(to: point)
+            if i == 0 {
+                path.move(to: point) // move to the start point
+            } else {
+                path.addLine(to: point) // draw line to next point
+            }
         }
-        path.closeSubpath()
 
+        path.closeSubpath()
         return path
     }
 }
-
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
