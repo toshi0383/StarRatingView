@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State var innerRadiusRatio: CGFloat = 0.5
     var body: some View {
         VStack {
             StarRatingView(rating: 0) { value in}
@@ -11,8 +12,12 @@ struct ContentView: View {
                 .frame(height: 60)
             StarRatingView(rating: 5, spacing: 10) { value in}
                 .frame(height: 100)
-            StarRatingView(rating: 5, spacing: 10) { value in}
+            StarRatingView(rating: 5, spacing: 10, innerRadiusRatio: innerRadiusRatio) { value in}
                 .frame(height: 300)
+
+            Slider(value: $innerRadiusRatio, in: (0.0...1.0), label: { Text(verbatim: "innerRadiusRatio") })
+                .padding()
+                .tint(.black)
         }
     }
 }
@@ -20,11 +25,18 @@ struct ContentView: View {
 struct StarRatingView: View {
     @State private var rating: Float
     private let spacing: CGFloat
+    var innerRadiusRatio: CGFloat
     var onChangeValue: (Float) -> Void
 
-    init(rating: Float = 2.5, spacing: CGFloat = 5, onChangeValue: @escaping (Float) -> Void) {
+    init(
+        rating: Float = 2.5,
+        spacing: CGFloat = 5,
+        innerRadiusRatio: CGFloat = 0.5,
+        onChangeValue: @escaping (Float) -> Void
+    ) {
         self.rating = rating
         self.spacing = spacing
+        self.innerRadiusRatio = innerRadiusRatio
         self.onChangeValue = onChangeValue
     }
 
@@ -52,12 +64,12 @@ struct StarRatingView: View {
         let isHalf = rating - Float(index) > 0 && rating - Float(index) < 1
         return Group {
             if index < Int(rating) {
-                FullStar()
+                StarShape(innerRatio: innerRadiusRatio)
                     .foregroundColor(.yellow)
             } else if isHalf {
-                HalfStar()
+                halfStar
             } else {
-                EmptyStar()
+                StarShape(innerRatio: innerRadiusRatio)
                     .foregroundColor(.gray)
             }
         }
@@ -73,20 +85,13 @@ struct StarRatingView: View {
         rating = rating == newRating ? 0 : newRating
         onChangeValue(rating)
     }
-}
 
-struct FullStar: Shape {
-    func path(in rect: CGRect) -> Path {
-        StarShape().path(in: rect)
-    }
-}
-
-struct HalfStar: View {
-    var body: some View {
+    @ViewBuilder
+    private var halfStar: some View {
         ZStack(alignment: .center) {
-            EmptyStar()
+            StarShape(innerRatio: innerRadiusRatio)
                 .foregroundColor(.yellow)
-            FullStar()
+            StarShape(innerRatio: innerRadiusRatio)
                 .foregroundColor(.gray)
                 .mask(alignment: .center) {
                     HStack(spacing: 0) {
@@ -95,14 +100,10 @@ struct HalfStar: View {
                     }
                 }
         }
+
     }
 }
 
-struct EmptyStar: Shape {
-    func path(in rect: CGRect) -> Path {
-        StarShape().path(in: rect)
-    }
-}
 struct StarShape: Shape {
     var points: Int = 5
     var innerRatio: CGFloat = 0.5 // The ratio of the inner radius to the outer radius
